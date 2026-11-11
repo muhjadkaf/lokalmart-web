@@ -1,21 +1,21 @@
 'use client';
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-
-export type CartItem = { id: string; nama: string; harga: number; satuan: string; qty: number };
+import type { CartItem, CatalogProduct } from '@/lib/types';
 
 type CartContextValue = {
   items: CartItem[];
   count: number;
   total: number;
-  add: (item: Omit<CartItem, 'qty'>, qty?: number) => void;
-  remove: (id: string) => void;
-  setQty: (id: string, qty: number) => void;
+  add: (product: CatalogProduct, qty?: number) => void;
+  addItem: (item: CartItem) => void;
+  remove: (odooId: number) => void;
+  setQty: (odooId: number, qty: number) => void;
   clear: () => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
-const STORAGE_KEY = 'lokalmart-cart-v1';
+const STORAGE_KEY = 'lokalmart-cart-v2';
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -26,7 +26,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) setItems(JSON.parse(raw) as CartItem[]);
     } catch {
-      /* abaikan keranjang rusak */
+      /* keranjang rusak — mulai kosong */
     }
     setHydrated(true);
   }, []);
@@ -41,21 +41,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items, hydrated]);
 
   const value = useMemo<CartContextValue>(() => {
-    const add: CartContextValue['add'] = (item, qty = 1) =>
+    const addItem: CartContextValue['addItem'] = (item) =>
       setItems((prev) => {
-        const existing = prev.find((i) => i.id === item.id);
+        const existing = prev.find((i) => i.odooId === item.odooId);
         if (existing) {
-          return prev.map((i) => (i.id === item.id ? { ...i, qty: Math.min(i.qty + qty, 999) } : i));
+          return prev.map((i) => (i.odooId === item.odooId ? { ...i, qty: Math.min(i.qty + item.qty, 999) } : i));
         }
-        return [...prev, { ...item, qty }];
+        return [...prev, { ...item, qty: Math.min(item.qty, 999) }];
       });
-    const remove: CartContextValue['remove'] = (id) => setItems((prev) => prev.filter((i) => i.id !== id));
-    const setQty: CartContextValue['setQty'] = (id, qty) =>
-      setItems((prev) => (qty <= 0 ? prev.filter((i) => i.id !== id) : prev.map((i) => (i.id === id ? { ...i, qty: Math.min(qty, 999) } : i))));
+    const add: CartContextValue['add'] = (product, qty = 1) =>
+      addItem({
+        odooId: product.odooId,
+        name: product.name,
+        price: product.price,
+        image: product.image ?? null,
+        storeName: product.storeName,
+        uom: product.uom,
+        qty,
+      });
+    const remove: CartContextValue['remove'] = (odooId) => setItems((prev) => prev.filter((i) => i.odooId !== odooId));
+    const setQty: CartContextValue['setQty'] = (odooId, qty) =>
+      setItems((prev) => (qty <= 0 ? prev.filter((i) => i.odooId !== odooId) : prev.map((i) => (i.odooId === odooId ? { ...i, qty: Math.min(qty, 999) } : i))));
     const clear: CartContextValue['clear'] = () => setItems([]);
-    const count = items.reduce((s, i) => s + i.qty, 0);
-    const total = items.reduce((s, i) => s + i.qty * i.harga, 0);
-    return { items, count, total, add, remove, setQty, clear };
+    const count = items.reduce((sum, i) => sum + i.qty, 0);
+    const total = items.reduce((sum, i) => sum + i.qty * i.price, 0);
+    return { items, count, total, add, addItem, remove, setQty, clear };
   }, [items]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

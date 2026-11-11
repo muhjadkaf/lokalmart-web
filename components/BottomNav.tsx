@@ -2,41 +2,28 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useCart } from './CartProvider';
 
 const items = [
   { href: '/', label: 'Beranda', icon: <path d="M4 11.5 12 4l8 7.5M6.5 10v9h11v-9" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" fill="none"/> },
-  { href: '/katalog', label: 'Katalog', icon: <path d="M5 7h14l-1.2 12a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 7Zm3.5 0a3.5 3.5 0 0 1 7 0" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" fill="none"/> },
-  { href: '/member', label: 'Member', icon: <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-6.5 8a6.5 6.5 0 0 1 13 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" fill="none"/> },
-  { href: '/info', label: 'Toko', icon: <path d="M5 10v9h14v-9M4 10l1.8-5h12.4L20 10M4 10h16M9.5 19v-5h5v5" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" fill="none"/> },
+  { href: '/peta', label: 'Peta', icon: <path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11Zm0-8.2a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" fill="none"/> },
+  { href: '/promo', label: 'Promo', icon: <path d="M4 9.5 9.5 4H20v10.5L14.5 20h-10zM14.5 9.5a1.5 1.5 0 1 0 0 .01" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" fill="none"/> },
+  { href: '/pesanan', label: 'Pesanan', icon: <path d="M6 3h9l4 4v14a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 21V4.5A1.5 1.5 0 0 1 6.5 3Zm3 7h6M9 14h6M9 17.5h4" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" fill="none"/> },
+  { href: '/akun', label: 'Akun', icon: <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8.5a7 7 0 0 1 14 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" fill="none"/> },
 ];
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const { count } = useCart();
-
   return (
     <nav className="bottomnav" aria-label="Navigasi utama">
-      {items.slice(0, 2).map((item) => (
-        <Link key={item.href} href={item.href} className={pathname === item.href ? 'active' : ''}>
-          <svg className="ic" viewBox="0 0 24 24" aria-hidden="true">{item.icon}</svg>
-          {item.label}
-        </Link>
-      ))}
-      <Link href="/keranjang" className={pathname === '/keranjang' ? 'active cart-badge' : 'cart-badge'}>
-        <svg className="ic" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 6h2l2.2 10.5a1.5 1.5 0 0 0 1.5 1.2h7.6a1.5 1.5 0 0 0 1.5-1.2L20 9H7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-          <circle cx="11.5" cy="21" r="1.3" fill="currentColor"/><circle cx="16.5" cy="21" r="1.3" fill="currentColor"/>
-        </svg>
-        Keranjang
-        {count > 0 && <b>{count > 99 ? '99+' : count}</b>}
-      </Link>
-      {items.slice(2).map((item) => (
-        <Link key={item.href} href={item.href} className={pathname === item.href ? 'active' : ''}>
-          <svg className="ic" viewBox="0 0 24 24" aria-hidden="true">{item.icon}</svg>
-          {item.label}
-        </Link>
-      ))}
+      {items.map((item) => {
+        const active = pathname === item.href;
+        return (
+          <Link key={item.href} href={item.href} className={active ? 'active' : ''} aria-current={active ? 'page' : undefined}>
+            <svg className="ic" viewBox="0 0 24 24" aria-hidden="true">{item.icon}</svg>
+            {item.label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

@@ -1,58 +1,50 @@
-# Lokalmart Web — Storefront Member
+# LokalMart Web
 
-Katalog promo member Lokalmart depan masjid: pilih produk → keranjang → checkout (pickup/antar) → tercatat ke Odoo `sale.order` (company **LokalMart**, id 1 di `edu-lokalmart.odoo.com`, atau instance produksi yang baru).
+Webapp untuk **LokalMart** (belanja produk UMKM lokal) — versi web dari **APK LokalMart** (`namlah-customer`, Flutter). Satu backend, dua client: keduanya memanggil API Namlah di **namlah-lokalmart.vercel.app** (Odoo = system of record).
 
-**Stack:** Next.js 15 (App Router) · TypeScript · XML-RPC/JSON-2 Odoo bridge (server-only) · tanpa database tambahan (Odoo = system of record) · deploy di Vercel.
+```
+Browser → /api/* (proxy same-origin, relay cookie namlah_session)
+        → namlah-lokalmart.vercel.app → Odoo
+```
 
-## Jalankan lokal
+**Kenapa proxy?** Cookie sesi `namlah_session` adalah httpOnly cookie first-party backend Namlah; webapp ini me-relay-nya agar tidak jadi third-party cookie (SaaS-friendly, tetap aman).
+
+## Fitur (parity APK)
+
+- **Auth member**: login (email/HP/Semut-ID + password atau PIN 6-digit), register (Semut-ID otomatis), session check, ganti password, PIN (set/hapus), nama sapaan, avatar — semua lewat route proxy `/api/auth/*`.
+- **Beranda**: deteksi kota terdekat (geolocation → `/api/koloni/cities`), katalog mega-koloni/koloni sesuai kota, best sellers.
+- **Katalog**: search, filter kategori, paginasi "muat lebih banyak", badge stok.
+- **Detail produk** (`/produk/[odooId]`): foto, harga Odoo, **bandingkan harga antar toko** (`/api/compare/product/[odooId]`).
+- **Peta UMKM** (`/peta`): Leaflet + OpenStreetMap, marker dari `/api/umkm/map-points`, sheet detail toko + produk.
+- **Keranjang & Checkout** (persist localStorage): Ambil di Toko / Antar ke Alamat, metode Tunai/QRIS/Transfer/Kartu, tercatat ke `sale.order` via `/api/checkout` (backend Namlah) — **wajib login**.
+- **Pesanan** (`/pesanan`): riwayat + ringkasan (total, belanja, menunggu) dari `/api/orders/mine`.
+- **Promo** (`/promo`): poin member & voucher (konten statis — cerminan PromoScreen APK).
+- **Akun** (`/akun`): member card (Semut-ID + barcode CSS), nama sapaan, PIN, ganti password, status verifikasi, logout.
+
+## Jalankan
 
 ```bash
-npm.cmd install        # Windows (PowerShell ExecutionPolicy: pakai .cmd!)
-npm.cmd run dev        # http://localhost:3000
+npm.cmd install
+npm.cmd run dev
 ```
 
-Tanpa `.env`, toko tetap tampil (katalog dari `lib/seed-products.ts`); checkout & member lookup akan menjawab "Odoo belum dikonfigurasi".
+Tanpa env: katalog tetap tampil? Tidak — webapp butuh backend Namlah; default `NAMLAH_API_BASE=https://namlah-lokalmart.vercel.app`. Override lewat env bila perlu.
 
-## Konfigurasi (Vercel → Project → Settings → Environment Variables)
-
-Salin `.env.example`. Wajib diisi: `ODOO_URL`, `ODOO_DB`, `ODOO_USERNAME` (bot internal, **bukan** user pribadi), `ODOO_PASSWORD` (atau JSON-2 API key), `ODOO_COMPANY_ID` (default `1` = LokalMart), `ODOO_WRITES=true`.
-
-**Keamanan:** semua kredensial Odoo hanya server-side. Tidak pernah dikirim ke browser. Checkout divalidasi di server (harga dari seed, bukan dari client), same-origin check + rate limit per IP.
-
-## Alur data
+Env (Vercel → Settings → Environment Variables):
 
 ```
-Browser (keranjang di localStorage)
-   │ POST /api/checkout { items:[{id,qty}], member{...}, metode }
-   ▼
-Next.js server route → validasi & harga ← lib/seed-products.ts (DAFTAR HARGA PROMO MINGGUAN)
-   ▼ XML-RPC
-Odoo: res.partner (cari/buat by WA) → product.product (match default_code LM-*, fallback nama) → sale.order (+ order_line promo) → nama order kembali ke member
+NAMLAH_API_BASE=https://namlah-lokalmart.vercel.app   # default, boleh tidak di-set
 ```
 
-Member lookup (`POST /api/member/lookup`): cocokkan 8 digit terakhir WA di `res.partner.phone/mobile`, tampilkan 5 order terakhir milik nomor itu. Tanpa password — friksi minimal untuk antrean toko.
+## Checklist deploy
 
-## Struktur
+- [x] Build & typecheck hijau
+- [ ] Deploy: `vercel deploy --prod` (GitHub integration TIDAK auto-deploy untuk project ini — pakai CLI)
+- [ ] Smoke: `/` → login → katalog → checkout dummy → cek `sale.order` di Odoo → batalkan
+- [ ] Rotate token Vercel bila dipakai di luar sesi ini
 
-```
-app/            beranda, katalog, keranjang, checkout, member, info + api/{health,products,member/lookup,checkout}
-components/     TopBar, BottomNav (5 tab), CartProvider (localStorage), ProductCard
-lib/            config (server env) · config-public (NEXT_PUBLIC_*) · odooBridge · checkout · member · seed-products
-```
+## Catatan arsitektur
 
-## Sebelum go-live (checklist)
-
-- [ ] Bot Odoo dibuat & kredensial masuk Vercel env (bukan di chat/file)
-- [ ] `ODOO_WRITES=true` setelah uji POST /api/checkout membuat order dummy TEST lalu **dibatalkan/dihapus dari Odoo**
-- [ ] `default_code` LM-* terisi di produk Odoo yang ikut katalog promo (match akurat, harga promo dari seed)
-- [ ] Uji member lookup dengan 1 nomor member nyata
-- [ ] Deploy: `npx vercel --prod` (atau hubungkan repo → auto deploy)
-- [ ] WA kasir tahu link `https://<domain>` untuk dibagikan ke status
-- [ ] Minggu promo berikutnya: edit `lib/seed-products.ts`, commit, deploy, selesai
-
-## Catatan keputusan
-
-- **Tanpa SQLite/KV** — Vercel serverless tidak persist; Odoo adalah satu-satunya record. Keranjang di localStorage browser.
-- **Foto produk** — sementara tile inisial warna per kategori (tanpa aset eksternal); ganti dengan foto asli (upload ke `public/produk/…` atau `image_128` dari Odoo) saat tersedia.
-- **Harga promo** — single source `lib/seed-products.ts`, sama dengan katalog PDF quotation Odoo (`Template-Quotation-Lokalmart/data-produk.json`). Sinkronkan tiap minggu.
-- **PWA** — manifest + theme-color aktif; service worker sengaja belum (checkout butuh network).
+- **Tanpa database lokal.** Keranjang di localStorage; sesi di cookie `namlah_session` first-party via proxy.
+- **APK ↔ web parity:** setiap fitur baru di APK (`namlah-customer`) harus diport ke web (dan sebaliknya, dengan approval produk).
+- Rate limit & same-origin check di route yang menulis (login, pin, sapaan, password, register, checkout).

@@ -1,38 +1,41 @@
 'use client';
 
 import { useCart } from './CartProvider';
-import { formatRupiah } from '@/lib/config-public';
-import type { SeedProduct } from '@/lib/seed-products';
+import { rupiah, type CatalogProduct } from '@/lib/types';
+import DataImage from './DataImage';
 
-function initials(nama: string) {
-  const words = nama.split(' ').filter(Boolean);
-  return (words[0]?.[0] || 'L').toUpperCase() + (words[1]?.[0] || '').toUpperCase();
-}
-
-function thumbClass(kategori: string) {
-  const k = kategori.toLowerCase().replace(/\s+/g, '-');
-  return `thumb k-${k}`;
-}
-
-export default function ProductCard({ product, discount }: { product: SeedProduct; discount: number }) {
+export default function ProductCard({ product }: { product: CatalogProduct }) {
   const { add } = useCart();
+  const low = typeof product.stock === 'number' && product.stock > 0 && product.stock <= 5;
+  const out = typeof product.stock === 'number' && product.stock <= 0;
 
   return (
-    <article className="card">
-      <div className={thumbClass(product.kategori)} aria-hidden="true">
-        <span className="badge">{product.badge}</span>
-        {discount > 0 && <span className="discount-pill">-{discount}%</span>}
-        {initials(product.nama)}
-      </div>
+    <article className="product-card">
+      <a
+        href={`/produk/${product.odooId}`}
+        className="thumb"
+        style={{ textDecoration: 'none' }}
+        aria-label={product.name}
+        onClick={() => {
+          try {
+            window.localStorage.setItem(`lokalmart-product-${product.odooId}`, JSON.stringify(product));
+          } catch {
+            /* abaikan */
+          }
+        }}
+      >
+        <DataImage image={product.image ?? null} name={product.name} />
+        {typeof product.stock === 'number' && (
+          <span className={`stock-badge${low ? ' low' : ''}`}>{out ? 'HABIS' : `STOK ${product.stock}`}</span>
+        )}
+      </a>
       <div className="card-body">
-        <h3>{product.nama}</h3>
-        <div className="ket">{product.keterangan} · {product.satuan.replace('/', 'per ')}</div>
-        <div className="price-row">
-          <div>
-            <div className="price-old">{formatRupiah(product.hargaNormal)}</div>
-            <div className="price-new">{formatRupiah(product.hargaPromo)}</div>
-          </div>
-          <button className="add-btn" onClick={() => add({ id: product.id, nama: product.nama, harga: product.hargaPromo, satuan: product.satuan })} aria-label={`Tambah ${product.nama} ke keranjang`}>
+        <h3>{product.name}</h3>
+        <div className="price">{product.formattedPrice || rupiah(product.price)}</div>
+        <div className="unit">per {product.uom} · {product.category}</div>
+        <div className="add-row">
+          <span className="store-tag" title={product.storeName}>{product.storeName}</span>
+          <button className="add-btn" onClick={() => add(product)} disabled={out} aria-label={`Tambah ${product.name} ke keranjang`}>
             + Keranjang
           </button>
         </div>

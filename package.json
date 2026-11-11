@@ -1,6 +1,6 @@
 {
   "name": "lokalmart-web",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Lokalmart — Storefront member depan masjid. Katalog promo, keranjang, checkout tercatat ke Odoo LokalMart.",
   "scripts": {
@@ -10,12 +10,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "leaflet": "^1.9.4",
     "next": "^15.1.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "xmlrpc": "^1.3.2"
   },
   "devDependencies": {
+    "@types/leaflet": "^1.9.22",
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",

@@ -1,18 +1,16 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import TopBar from '@/components/TopBar';
-import BottomNav from '@/components/BottomNav';
-import { CartProvider } from '@/components/CartProvider';
+import AppShell from '@/components/AppShell';
 
 export const metadata: Metadata = {
-  title: 'Lokalmart — Mitra Belanja Keluarga Indonesia',
-  description: 'Belanja harian hemat member Lokalmart: promo mingguan, antar/pickup depan masjid. Katalog, keranjang, dan order langsung tercatat ke kasir toko.',
-  applicationName: 'Lokalmart',
+  title: 'LokalMart — Belanja Produk UMKM Lokal',
+  description: 'Belanja produk UMKM lokal terkurasi: katalog koloni, promo member, dan pembayaran via kasir toko. Bagian dari ekosistem LokalMart (PT LokalKaryaBakti).',
+  applicationName: 'LokalMart',
   manifest: '/manifest.webmanifest',
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0e7a3e',
+  themeColor: '#0a0a0b',
   width: 'device-width',
   initialScale: 1,
 };
@@ -21,13 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="id">
       <body>
-        <CartProvider>
-          <div className="app-shell">
-            <TopBar />
-            <main>{children}</main>
-            <BottomNav />
-          </div>
-        </CartProvider>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

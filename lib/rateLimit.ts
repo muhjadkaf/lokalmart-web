@@ -1,4 +1,4 @@
-/** Rate limiter sederhana in-memory (per instance serverless). */
+/** Rate limiter sederhana (per instance serverless) + proteksi origin. */
 const buckets = new Map<string, { count: number; resetAt: number }>();
 
 export function rateLimit(key: string, limit: number, windowMs: number): { ok: boolean; retryAfterSeconds: number } {
@@ -20,13 +20,11 @@ export function clientIp(request: Request): string {
   return fwd.split(',')[0]?.trim() || 'unknown';
 }
 
-/** Tolak request lintas-origin (CSRF sederhana untuk POST tanpa cookie). */
 export function sameOrigin(request: Request): boolean {
   const origin = request.headers.get('origin');
-  if (!origin) return true; // non-browser client / same-origin fetch tanpa header
+  if (!origin) return true;
   try {
-    const host = new URL(origin).host;
-    return host === request.headers.get('host');
+    return new URL(origin).host === request.headers.get('host');
   } catch {
     return false;
   }

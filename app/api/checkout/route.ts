@@ -1,20 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { runCheckout, type CheckoutInput } from '@/lib/checkout';
+import { namlahFetch, jsonWithRelay, sessionCookieFrom } from '@/lib/namlah';
 import { rateLimit, clientIp, sameOrigin } from '@/lib/rateLimit';
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: NextRequest) {
-  if (!sameOrigin(request)) {
-    return NextResponse.json({ ok: false, error: 'Origin ditolak.' }, { status: 403 });
-  }
-  const ip = clientIp(request);
-  const rl = rateLimit(`checkout:${ip}`, 10, 60_000);
-  if (!rl.ok) {
-    return NextResponse.json({ ok: false, error: `Terlalu sering checkout. Coba lagi ${rl.retryAfterSeconds}s lagi.` }, { status: 429 });
-  }
-  let body: unknown;
-  try { body = await request.json(); } catch { return NextResponse.json({ ok: false, error: 'Body harus JSON.' }, { status: 400 }); }
-  const result = await runCheckout(body as CheckoutInput);
-  return NextResponse.json(result, { status: result.ok ? 200 : 400 });
+export async function POST(request: Request) {
+  if (!sameOrigin(request)) return Response.json({ ok: false, error: 'Origin ditolak.' }, { status: 403 });
+  const rl = rateLimit(`checkout:${clientIp(request)}`, 10, 60_000);
+  if (!rl.ok) return Response.json({ ok: false, error: 'Terlalu sering checkout. Coba lagi sebentar.' }, { status: 429 });
+  const body = await request.json().catch(() => ({}));
+  const cookie = sessionCookieFrom(request.headers.get('cookie'));
+  const result = await namlahFetch('/api/checkout', { method: 'POST', body, cookie, timeoutMs: 30_000 });
+  return jsonWithRelay(result);
 }

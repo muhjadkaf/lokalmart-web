@@ -1,48 +1,39 @@
-import { tokoInfo, waLink } from '@/lib/config-public';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Pusat Bantuan — LokalMart',
+};
 
 export default function InfoPage() {
-  const toko = tokoInfo();
-  const mapsQuery = encodeURIComponent(toko.alamat);
+  const wa = process.env.NEXT_PUBLIC_TOKO_WA || '0812-3456-7890';
+  const waLink = process.env.NEXT_PUBLIC_TOKO_WA_LINK || '6281234567890';
 
   return (
-    <>
-      <div className="info-block" style={{ paddingTop: 18 }}>
-        <h2>Tentang {toko.nama}</h2>
-        <p>{toko.nama} adalah toko komunitas member-based di {toko.alamat} — dikelola bersama warga, dengan transparansi pembukuan (Odoo) dan Sisa Hasil Usaha (SHU) untuk anggota. Belanja harian kamu jadi modal membangun ekonomi warga sekitar.</p>
+    <div className="section" style={{ paddingTop: 18 }}>
+      <div className="eyebrow">PUSAT BANTUAN</div>
+      <h1 className="page-title" style={{ fontSize: 22, margin: '4px 0 14px' }}>LokalMart Care</h1>
+
+      <div className="card card-pad" style={{ marginBottom: 12 }}>
+        <b style={{ fontSize: 13.5 }}>Ada kendala pesanan?</b>
+        <p style={{ fontSize: 12.5, color: 'var(--muted)', lineHeight: 1.65, marginTop: 6 }}>Tunjukkan nama + nomor order (mis. S00092) ke kasir toko depan masjid, atau chat WA <a style={{ color: 'var(--gold)', fontWeight: 700 }} href={`https://wa.me/${waLink}`}>{wa}</a>. Kami bantu cek statusnya di kasir.</p>
       </div>
 
-      <div className="info-block">
-        <h2>Jam Buka</h2>
-        <p>{toko.jam}</p>
-      </div>
-
-      <div className="info-block">
-        <h2>Lokasi &amp; Kontak</h2>
-        <p>{toko.alamat}</p>
-        <p style={{ marginTop: 6 }}>WA Kasir: <a href={waLink(`Halo ${toko.nama}!`)}>{toko.wa}</a><br />
-        Maps: <a href={`https://www.google.com/maps/search/${mapsQuery}`} target="_blank" rel="noopener noreferrer">buka di Google Maps →</a></p>
-      </div>
-
-      <div className="info-block">
-        <h2>Cara Pesan</h2>
-        <ul>
-          <li><b>Ambil di toko:</b> pesan lewat web → tunjukkan nama / nomor WA di kasir → bayar → bawa pulang.</li>
-          <li><b>Diantar:</b> pesan lewat web → kurir koloni mengantar ke alamat kamu (area sekitar toko) → bayar COD / transfer sesuai konfirmasi WA.</li>
-          <li><b>Tanya dulu:</b> keraguan soal stok/harga — tanya WA kasir, lebih cepat daripada nebak.</li>
+      <div className="card card-pad" style={{ marginBottom: 12 }}>
+        <b style={{ fontSize: 13.5 }}>Cara belanja</b>
+        <ul style={{ fontSize: 12.5, color: 'var(--muted)', lineHeight: 1.7, paddingLeft: 18, marginTop: 6 }}>
+          <li>Pilih produk di Katalog → tambah ke keranjang.</li>
+          <li>Checkout: Ambil di Toko (gratis) atau Antar ke Alamat (kurir koloni).</li>
+          <li>Pesanan tercatat di kasir; kamu bayar saat barang disiapkan.</li>
+          <li>Riwayat belanja ada di menu Pesanan.</li>
         </ul>
       </div>
 
-      <div className="info-block">
-        <h2>Harga &amp; Ketentuan</h2>
-        <ul>
-          <li>Harga promo hanya untuk member; harga dapat berubah sewaktu-waktu.</li>
-          <li>Stok promo terbatas — siapa cepat, dia dapat.</li>
-          <li>Gambar produk bersifat ilustrasi; kasir akan cocokkan saat pengambilan.</li>
-          <li>Data member (nama, WA, alamat) hanya dipakai untuk transaksi &amp; SHU — tidak dijual. Permintaan hapus data: hubungi kasir.</li>
-        </ul>
+      <div className="card card-pad">
+        <b style={{ fontSize: 13.5 }}>Privasi &amp; data</b>
+        <p style={{ fontSize: 12.5, color: 'var(--muted)', lineHeight: 1.65, marginTop: 6 }}>Nama, WA, dan alamatmu hanya dipakai untuk transaksi &amp; pembukuan koloni — tidak diperjualbelikan. Ingin menghapus data/akun? Ketuk "Hubungi kasir" dengan pesan "HAPUS AKUN".</p>
       </div>
 
-      <footer className="site">{toko.nama} · {toko.tagline}<br />Bagian dari ekosistem koloni Namlah.</footer>
-    </>
+      <footer className="site" style={{ marginTop: 18 }}>LokalMart — PT LokalKaryaBakti<br />Depan Masjid, Jl. Raya Toko Kelontong No. 88</footer>
+    </div>
   );
 }
